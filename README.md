@@ -28,16 +28,28 @@ probably will, use at your own peril.
 	    response,err := request.ItemLookup(asins, responseGroups, itemsType)
 	    
 	    if err == nil && response.Request.IsValid {
-	        for _, item := range response.Items {
-	            fmt.Printf("ASIN: %s\n", item.ASIN)
-	            fmt.Printf("DetailPageURL: %s\n", item.DetailPageURL)
-	            fmt.Printf("Author: %s\n", item.Author)
-	            fmt.Printf("Price: %s\n", item.Price)
-	            fmt.Printf("Medium Image URL: %s\n", item.MediumImage.URL)
-	        }
-	    } else {
-	        fmt.Println(err)
-	    }
+			fmt.Println("-------------------")
+			fmt.Println("Request information")
+			fmt.Println("-------------------")
+			fmt.Printf("IdType: %s\n", response.Request.ItemLookupRequest.IdType)
+			fmt.Printf("ItemId: %s\n", response.Request.ItemLookupRequest.ItemId)
+			fmt.Printf("ResponseGroup: %s\n", response.Request.ItemLookupRequest.ResponseGroup)
+			fmt.Printf("VariationPage: %s\n", response.Request.ItemLookupRequest.VariationPage)
+			fmt.Println("-------------------")
+
+			for count, item := range response.Items {
+				fmt.Println("-------------------")
+				fmt.Printf("Item %d\n", count+1)
+				fmt.Println("-------------------")
+				fmt.Printf("ASIN: %s\n", item.ASIN)
+				fmt.Printf("DetailPageURL: %s\n", item.DetailPageURL)
+				fmt.Printf("Author: %s\n", item.Author)
+				fmt.Printf("Price: %s\n", item.Price)
+				fmt.Printf("Medium Image URL: %s\n", item.MediumImage.URL)
+			}
+		} else {
+			fmt.Println(err)
+		}
 	}
 
  
