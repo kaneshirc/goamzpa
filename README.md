@@ -32,8 +32,8 @@ probably will, use at your own peril.
 			fmt.Println("Request information")
 			fmt.Println("-------------------")
 			fmt.Printf("IdType: %s\n", response.Request.ItemLookupRequest.IdType)
-			fmt.Printf("ItemId: %s\n", response.Request.ItemLookupRequest.ItemId)
-			fmt.Printf("ResponseGroup: %s\n", response.Request.ItemLookupRequest.ResponseGroup)
+			fmt.Printf("ItemIds: %s\n", response.Request.ItemLookupRequest.ItemIds)
+			fmt.Printf("ResponseGroups: %s\n", response.Request.ItemLookupRequest.ResponseGroups)
 			fmt.Printf("VariationPage: %s\n", response.Request.ItemLookupRequest.VariationPage)
 			fmt.Println("-------------------")
 
@@ -45,7 +45,9 @@ probably will, use at your own peril.
 				fmt.Printf("DetailPageURL: %s\n", item.DetailPageURL)
 				fmt.Printf("Author: %s\n", item.Author)
 				fmt.Printf("Price: %s\n", item.Price)
+				fmt.Printf("Small Image URL: %s\n", item.SmallImage.URL)
 				fmt.Printf("Medium Image URL: %s\n", item.MediumImage.URL)
+				fmt.Printf("Large Image URL: %s\n", item.LargeImage.URL)
 			}
 		} else {
 			fmt.Println(err)
