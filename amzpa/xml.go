@@ -12,10 +12,14 @@ import (
 )
 
 type Image struct {
-	XMLName xml.Name `xml:"MediumImage"`
-	URL     string
-	Height  uint16
-	Width   uint16
+	URL    string
+	Height uint16
+	Width  uint16
+}
+
+type ItemLink struct {
+	Description string
+	URL         string
 }
 
 type Item struct {
@@ -23,10 +27,13 @@ type Item struct {
 	ASIN          string
 	URL           string
 	DetailPageURL string
-	Author        string `xml:"ItemAttributes>Author"`
-	Price         string `xml:"ItemAttributes>ListPrice>FormattedPrice"`
-	PriceRaw      string `xml:"ItemAttributes>ListPrice>Amount"`
-	MediumImage   Image
+	Author        string     `xml:"ItemAttributes>Author"`
+	Price         string     `xml:"ItemAttributes>ListPrice>FormattedPrice"`
+	PriceRaw      string     `xml:"ItemAttributes>ListPrice>Amount"`
+	SmallImage    Image      `xml:"SmallImage"`
+	MediumImage   Image      `xml:"MediumImage"`
+	LargeImage    Image      `xml:"LargeImage"`
+	ItemLinks     []ItemLink `xml:"ItemLinks>ItemLink"`
 }
 
 type Request struct {
@@ -36,11 +43,11 @@ type Request struct {
 }
 
 type ItemLookupRequest struct {
-	XMLName       xml.Name `xml:"ItemLookupRequest"`
-	IdType        string
-	ItemId        []string
-	ResponseGroup []string
-	VariationPage string
+	XMLName        xml.Name `xml:"ItemLookupRequest"`
+	IdType         string
+	ItemIds        []string `xml:"ItemId"`
+	ResponseGroups []string `xml:"ResponseGroup"`
+	VariationPage  string
 }
 
 type ItemLookupResponse struct {
