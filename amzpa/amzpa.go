@@ -11,6 +11,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -33,15 +34,10 @@ var service_domains = map[string]string{
 }
 
 type AmazonRequest struct {
-	accessKeyID     string
-	accessKeySecret string
-	associateTag    string
-	region          string
-}
-
-// Create a new AmazonRequest initialized with the given parameters
-func NewRequest(accessKeyID string, accessKeySecret string, associateTag string, region string) *AmazonRequest {
-	return &AmazonRequest{accessKeyID, accessKeySecret, associateTag, region}
+	AccessKeyID     string
+	AccessKeySecret string
+	AssociateTag    string
+	Region          string
 }
 
 // Perform an ItemLookup request.
@@ -49,18 +45,50 @@ func NewRequest(accessKeyID string, accessKeySecret string, associateTag string,
 // Usage:
 // ids := []string{"01289328","2837423"}
 // response,err := request.ItemLookup(ids, "Medium,Accessories", "ASIN")
-func (self AmazonRequest) ItemLookup(itemIds []string, responseGroups string, idType string) (ItemLookupResponse, error) {
-	now := time.Now()
+func (request *AmazonRequest) ItemLookup(itemIds []string, responseGroups string, idType string) (ItemLookupResponse, error) {
 	arguments := make(map[string]string)
-	arguments["AWSAccessKeyId"] = self.accessKeyID
+	arguments["Operation"] = "ItemLookup"
+	arguments["ItemId"] = strings.Join(itemIds, ",")
+	arguments["IdType"] = idType
+
+	requestURL := request.buildURL(arguments, responseGroups)
+	content, err := doRequest(requestURL)
+
+	response := ItemLookupResponse{}
+
+	err = xml.Unmarshal(content, &response)
+
+	return response, err
+}
+
+func (request *AmazonRequest) ItemSearch(keywords string, responseGroups string, searchIndex string) (ItemSearchResponse, error) {
+	arguments := make(map[string]string)
+	arguments["Operation"] = "ItemSearch"
+	arguments["Keywords"] = keywords
+	arguments["SearchIndex"] = searchIndex
+
+	requestURL := request.buildURL(arguments, responseGroups)
+	content, err := doRequest(requestURL)
+
+	response := ItemSearchResponse{}
+
+	err = xml.Unmarshal(content, &response)
+
+	return response, err
+}
+
+// Build and sign amazon specific URL
+//
+// Usage:
+// url := request.buildURL(arguments, responseGroup)
+func (request *AmazonRequest) buildURL(arguments map[string]string, responseGroups string) string {
+	now := time.Now()
+	arguments["AWSAccessKeyId"] = request.AccessKeyID
 	arguments["Version"] = "2011-08-01"
 	arguments["Timestamp"] = now.Format(time.RFC3339)
-	arguments["Operation"] = "ItemLookup"
 	arguments["Service"] = "AWSEcommerceService"
-	arguments["AssociateTag"] = self.associateTag 
-	arguments["ItemId"] = strings.Join(itemIds, ",")
+	arguments["AssociateTag"] = request.AssociateTag
 	arguments["ResponseGroup"] = responseGroups
-	arguments["IdType"] = idType
 
 	// Sort the keys otherwise Amazon hash will be
 	// different from mine and the request will fail
@@ -83,24 +111,17 @@ func (self AmazonRequest) ItemLookup(itemIds []string, responseGroups string, id
 	}
 
 	// Hash & Sign
-	var err error
-	domain := service_domains[self.region]
+	domain := service_domains[request.Region]
 
 	data := "GET\n" + domain + "\n/onca/xml\n" + queryString
-	hash := hmac.New(sha256.New, []byte(self.accessKeySecret))
+	hash := hmac.New(sha256.New, []byte(request.AccessKeySecret))
 	hash.Write([]byte(data))
 	signature := url.QueryEscape(base64.StdEncoding.EncodeToString(hash.Sum(nil)))
 	queryString = fmt.Sprintf("%s&Signature=%s", queryString, signature)
 
-	// Do request
+	// build request URL
 	requestURL := fmt.Sprintf("http://%s/onca/xml?%s", domain, queryString)
-	content, err := doRequest(requestURL)
-
-	if err != nil {
-		return ItemLookupResponse{}, err
-	}
-
-	return unmarshal(content)
+	return requestURL
 }
 
 // TODO add "Accept-Encoding": "gzip" and override UserAgent

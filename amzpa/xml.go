@@ -27,6 +27,7 @@ type Item struct {
 	ASIN          string
 	URL           string
 	DetailPageURL string
+	Title         string     `xml:"ItemAttributes>Title"`
 	Author        string     `xml:"ItemAttributes>Author"`
 	Price         string     `xml:"ItemAttributes>ListPrice>FormattedPrice"`
 	PriceRaw      string     `xml:"ItemAttributes>ListPrice>Amount"`
@@ -50,19 +51,20 @@ type ItemLookupRequest struct {
 	VariationPage  string
 }
 
-type ItemLookupResponse struct {
-	XMLName xml.Name `xml:"ItemLookupResponse"`
-	Items   []Item   `xml:"Items>Item"`
-	Request Request  `xml:"Items>Request"`
+type ItemResponseBase struct {
+	Items   []Item  `xml:"Items>Item"`
+	Request Request `xml:"Items>Request"`
 }
 
-func unmarshal(contents []byte) (ItemLookupResponse, error) {
-	itemLookupResponse := ItemLookupResponse{}
-	err := xml.Unmarshal(contents, &itemLookupResponse)
+type ItemLookupResponse struct {
+	ItemResponseBase
+	XMLName xml.Name `xml:"ItemLookupResponse"`
+}
 
-	if err != nil {
-		return ItemLookupResponse{}, err
-	}
-
-	return itemLookupResponse, err
+type ItemSearchResponse struct {
+	ItemResponseBase
+	XMLName              xml.Name `xml:"ItemSearchResponse"`
+	TotalResults         uint16   `xml:"Items>TotalResults"`
+	TotalPages           uint16   `xml:"Items>TotalPages"`
+	MoreSearchResultsUrl string   `xml:"Items>MoreSearchResultsUrl"`
 }
