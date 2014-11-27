@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package amzpa provides functionality for using the
+// Package goamzpa provides functionality for using the
 // Amazon Product Advertising service.
 
-package amzpa
+package goamzpa
 
 import (
 	"crypto/hmac"
@@ -52,11 +52,11 @@ func (request *AmazonRequest) ItemLookup(itemIds []string, responseGroups string
 	arguments["IdType"] = idType
 
 	requestURL := request.buildURL(arguments, responseGroups)
-	content, err := doRequest(requestURL)
+	contents, err := doRequest(requestURL)
 
 	response := ItemLookupResponse{}
 
-	err = xml.Unmarshal(content, &response)
+	err = xml.Unmarshal(contents, &response)
 
 	return response, err
 }
@@ -68,11 +68,11 @@ func (request *AmazonRequest) ItemSearch(keywords string, responseGroups string,
 	arguments["SearchIndex"] = searchIndex
 
 	requestURL := request.buildURL(arguments, responseGroups)
-	content, err := doRequest(requestURL)
+	contents, err := doRequest(requestURL)
 
 	response := ItemSearchResponse{}
 
-	err = xml.Unmarshal(content, &response)
+	err = xml.Unmarshal(contents, &response)
 
 	return response, err
 }

@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package amzpa provides functionality for using the
+// Package goamzpa provides functionality for using the
 // Amazon Product Advertising service.
 
-package amzpa
+package goamzpa
 
 import (
 	"encoding/xml"
