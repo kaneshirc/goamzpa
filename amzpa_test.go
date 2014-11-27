@@ -25,11 +25,13 @@ func TestItemLookup(t *testing.T) {
 
 	asins := []string{"0141033576,0615314465,1470057719"}
 
-	responseGroups := "Medium,Accessories"
+	responseGroups := "ItemAttributes,Images,BrowseNodes,EditorialReview,Reviews"
 	itemsType := "ASIN"
-	response, err := request.ItemLookup(responseGroups, itemsType, asins...)
+	contents, response, err := request.ItemLookup(responseGroups, itemsType, asins...)
 
 	if err == nil && response.Request.IsValid {
+		fmt.Printf("\n%s\n", string(contents))
+
 		fmt.Println("-------------------")
 		fmt.Println("Request information")
 		fmt.Println("-------------------")
@@ -53,7 +55,6 @@ func TestItemLookup(t *testing.T) {
 			fmt.Printf("Large Image URL: %s\n", item.LargeImage.URL)
 		}
 	} else {
-		fmt.Println(err)
 		t.Error(err)
 	}
 }
@@ -67,14 +68,15 @@ func TestItemSearch(t *testing.T) {
 	version := "2013-08-01"
 
 	request := &AmazonRequest{accessKey, accessSecret, associateTag, region, version}
-	responseGroups := "Medium"
+	responseGroups := "ItemAttributes,Images,BrowseNodes,EditorialReview,Reviews"
 
-	response, err := request.ItemSearch(responseGroups, "All", "golang")
+	contents, response, err := request.ItemSearch(responseGroups, "All", "golang")
 
 	if err == nil && response.Request.IsValid {
+		fmt.Printf("\n%s\n", string(contents))
+
 		fmt.Println("-------------------")
 		fmt.Println("Request information")
-		fmt.Println("-------------------")
 		fmt.Println("-------------------")
 		for count, item := range response.Items {
 			fmt.Println("-------------------")
@@ -83,8 +85,8 @@ func TestItemSearch(t *testing.T) {
 			fmt.Printf("ASIN: %s\n", item.ASIN)
 			fmt.Printf("Title: %s\n", item.Title)
 		}
+
 	} else {
-		fmt.Println(err)
 		t.Error(err)
 	}
 }

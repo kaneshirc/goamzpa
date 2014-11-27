@@ -45,7 +45,7 @@ type AmazonRequest struct {
 //
 // Usage:
 // response,err := request.ItemLookup("Medium,Accessories", "ASIN", "01289328", "2837423")
-func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, itemIds ...string) (ItemLookupResponse, error) {
+func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, itemIds ...string) ([]byte, ItemLookupResponse, error) {
 	arguments := make(map[string]string)
 	arguments["Operation"] = "ItemLookup"
 	arguments["IdType"] = idType
@@ -60,14 +60,14 @@ func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, i
 		err = xml.Unmarshal(contents, &response)
 	}
 
-	return response, err
+	return contents, response, err
 }
 
 // Perform an ItemLookup request.
 //
 // Usage:
 // response,err := request.ItemSearch("Medium,Accessories", "All", "golang")
-func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) (ItemSearchResponse, error) {
+func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) ([]byte, ItemSearchResponse, error) {
 	arguments := make(map[string]string)
 	arguments["Operation"] = "ItemSearch"
 	arguments["SearchIndex"] = searchIndex
@@ -82,7 +82,7 @@ func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex stri
 		err = xml.Unmarshal(contents, &response)
 	}
 
-	return response, err
+	return contents, response, err
 }
 
 // Build and sign amazon specific URL
