@@ -59,6 +59,5 @@ probably will, use at your own peril.
 ## TODO
 * [IN PROGRESS] Map the XML to a struct, so that the response is not just a big string
 * Support more than one ResponseGroup
-* ItemSearch
 * Gzip compression
 

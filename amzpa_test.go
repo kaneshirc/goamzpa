@@ -13,20 +13,21 @@ import (
 	"testing"
 )
 
-func TestAmzpa(t *testing.T) {
+func TestItemLookup(t *testing.T) {
 	// Complete these variables with your credentials
 	accessKey := os.Getenv("ACCESS_KEY")
 	accessSecret := os.Getenv("ACCESS_SECRET")
 	associateTag := os.Getenv("ASSOCIATE_TAG")
 	region := "UK"
+	version := "2013-08-01"
 
-	request := &AmazonRequest{accessKey, accessSecret, associateTag, region}
+	request := &AmazonRequest{accessKey, accessSecret, associateTag, region, version}
 
 	asins := []string{"0141033576,0615314465,1470057719"}
 
 	responseGroups := "Medium,Accessories"
 	itemsType := "ASIN"
-	response, err := request.ItemLookup(asins, responseGroups, itemsType)
+	response, err := request.ItemLookup(responseGroups, itemsType, asins...)
 
 	if err == nil && response.Request.IsValid {
 		fmt.Println("-------------------")
@@ -50,6 +51,37 @@ func TestAmzpa(t *testing.T) {
 			fmt.Printf("Small Image URL: %s\n", item.SmallImage.URL)
 			fmt.Printf("Medium Image URL: %s\n", item.MediumImage.URL)
 			fmt.Printf("Large Image URL: %s\n", item.LargeImage.URL)
+		}
+	} else {
+		fmt.Println(err)
+		t.Error(err)
+	}
+}
+
+func TestItemSearch(t *testing.T) {
+	// Complete these variables with your credentials
+	accessKey := os.Getenv("ACCESS_KEY")
+	accessSecret := os.Getenv("ACCESS_SECRET")
+	associateTag := os.Getenv("ASSOCIATE_TAG")
+	region := "US"
+	version := "2013-08-01"
+
+	request := &AmazonRequest{accessKey, accessSecret, associateTag, region, version}
+	responseGroups := "Medium"
+
+	response, err := request.ItemSearch(responseGroups, "All", "golang")
+
+	if err == nil && response.Request.IsValid {
+		fmt.Println("-------------------")
+		fmt.Println("Request information")
+		fmt.Println("-------------------")
+		fmt.Println("-------------------")
+		for count, item := range response.Items {
+			fmt.Println("-------------------")
+			fmt.Printf("Item %d\n", count+1)
+			fmt.Println("-------------------")
+			fmt.Printf("ASIN: %s\n", item.ASIN)
+			fmt.Printf("Title: %s\n", item.Title)
 		}
 	} else {
 		fmt.Println(err)

@@ -38,41 +38,49 @@ type AmazonRequest struct {
 	AccessKeySecret string
 	AssociateTag    string
 	Region          string
+	Version         string
 }
 
 // Perform an ItemLookup request.
 //
 // Usage:
-// ids := []string{"01289328","2837423"}
-// response,err := request.ItemLookup(ids, "Medium,Accessories", "ASIN")
-func (request *AmazonRequest) ItemLookup(itemIds []string, responseGroups string, idType string) (ItemLookupResponse, error) {
+// response,err := request.ItemLookup("Medium,Accessories", "ASIN", "01289328", "2837423")
+func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, itemIds ...string) (ItemLookupResponse, error) {
 	arguments := make(map[string]string)
 	arguments["Operation"] = "ItemLookup"
-	arguments["ItemId"] = strings.Join(itemIds, ",")
 	arguments["IdType"] = idType
+	arguments["ItemId"] = strings.Join(itemIds, ",")
 
 	requestURL := request.buildURL(arguments, responseGroups)
 	contents, err := doRequest(requestURL)
 
 	response := ItemLookupResponse{}
 
-	err = xml.Unmarshal(contents, &response)
+	if err == nil {
+		err = xml.Unmarshal(contents, &response)
+	}
 
 	return response, err
 }
 
-func (request *AmazonRequest) ItemSearch(keywords string, responseGroups string, searchIndex string) (ItemSearchResponse, error) {
+// Perform an ItemLookup request.
+//
+// Usage:
+// response,err := request.ItemSearch("Medium,Accessories", "All", "golang")
+func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) (ItemSearchResponse, error) {
 	arguments := make(map[string]string)
 	arguments["Operation"] = "ItemSearch"
-	arguments["Keywords"] = keywords
 	arguments["SearchIndex"] = searchIndex
+	arguments["Keywords"] = keywords
 
 	requestURL := request.buildURL(arguments, responseGroups)
 	contents, err := doRequest(requestURL)
 
 	response := ItemSearchResponse{}
 
-	err = xml.Unmarshal(contents, &response)
+	if err == nil {
+		err = xml.Unmarshal(contents, &response)
+	}
 
 	return response, err
 }
@@ -84,7 +92,7 @@ func (request *AmazonRequest) ItemSearch(keywords string, responseGroups string,
 func (request *AmazonRequest) buildURL(arguments map[string]string, responseGroups string) string {
 	now := time.Now()
 	arguments["AWSAccessKeyId"] = request.AccessKeyID
-	arguments["Version"] = "2011-08-01"
+	arguments["Version"] = request.Version
 	arguments["Timestamp"] = now.Format(time.RFC3339)
 	arguments["Service"] = "AWSEcommerceService"
 	arguments["AssociateTag"] = request.AssociateTag
