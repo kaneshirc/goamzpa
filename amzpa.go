@@ -100,8 +100,8 @@ func (request *AmazonRequest) buildURL(params map[string]string, responseGroups 
 	}
 	sort.Strings(keys)
 
-	// There's probably a more efficient way to concatenate strings, not a big deal though.
-	// TODO もっと効率のいい文字列連結方法があるはず
+	// TODO There's probably a more efficient way to concatenate strings, not a big deal though.
+	//      もっと効率のいい文字列連結方法があるはず
 	var queryString string
 	for _, key := range keys {
 		escapedArg := url.QueryEscape(params[key])
