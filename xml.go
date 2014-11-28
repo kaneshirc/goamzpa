@@ -56,11 +56,25 @@ type ItemResponseBase struct {
 	Request Request `xml:"Items>Request"`
 }
 
+// Mapping xml to struct.
+//
+// Usage:
+//    import "encoding/xml"
+//
+//    itemLookupResponse := ItemLookupResponse{}
+//    xml.Unmarshal(data, &itemLookupResponse)
 type ItemLookupResponse struct {
 	ItemResponseBase
 	XMLName xml.Name `xml:"ItemLookupResponse"`
 }
 
+// Mapping xml to struct.
+//
+// Usage:
+//    import "encoding/xml"
+//
+//    itemLookupResponse := ItemLookupResponse{}
+//    xml.Unmarshal(data, &itemLookupResponse)
 type ItemSearchResponse struct {
 	ItemResponseBase
 	XMLName              xml.Name `xml:"ItemSearchResponse"`

@@ -11,7 +11,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,7 +20,7 @@ import (
 	"time"
 )
 
-var service_domains = map[string]string{
+var hosts = map[string]string{
 	"CA": "ecs.amazonaws.ca",
 	"CN": "webservices.amazon.cn",
 	"DE": "ecs.amazonaws.de",
@@ -38,78 +37,74 @@ type AmazonRequest struct {
 	AccessKeySecret string
 	AssociateTag    string
 	Region          string
+	Service         string
 	Version         string
+	Client          *http.Client
+}
+
+// Create a new AmazonRequest initialized with the given parameters
+func NewRequest(accessKeyID string, accessKeySecret string, associateTag string, region string) *AmazonRequest {
+	return &AmazonRequest{accessKeyID, accessKeySecret, associateTag, region, "AWSEcommerceService", "2013-08-01", &http.Client{}}
+}
+
+// Create a new AmazonRequest initialized with the given parameters
+func NewRequestWithClient(accessKeyID string, accessKeySecret string, associateTag string, region string, client *http.Client) *AmazonRequest {
+	return &AmazonRequest{accessKeyID, accessKeySecret, associateTag, region, "AWSEcommerceService", "2013-08-01", client}
 }
 
 // Perform an ItemLookup request.
 //
 // Usage:
-// response,err := request.ItemLookup("Medium,Accessories", "ASIN", "01289328", "2837423")
-func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, itemIds ...string) ([]byte, ItemLookupResponse, error) {
-	arguments := make(map[string]string)
-	arguments["Operation"] = "ItemLookup"
-	arguments["IdType"] = idType
-	arguments["ItemId"] = strings.Join(itemIds, ",")
+//    response,err := request.ItemLookup("Medium,Accessories", "ASIN", "01289328", "2837423")
+func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, itemIds ...string) ([]byte, error) {
+	params := make(map[string]string)
+	params["Operation"] = "ItemLookup"
+	params["IdType"] = idType
+	params["ItemId"] = strings.Join(itemIds, ",")
 
-	requestURL := request.buildURL(arguments, responseGroups)
-	contents, err := doRequest(requestURL)
-
-	response := ItemLookupResponse{}
-
-	if err == nil {
-		err = xml.Unmarshal(contents, &response)
-	}
-
-	return contents, response, err
+	requestURL := request.buildURL(params, responseGroups)
+	return request.doRequest(requestURL)
 }
 
 // Perform an ItemLookup request.
 //
 // Usage:
-// response,err := request.ItemSearch("Medium,Accessories", "All", "golang")
-func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) ([]byte, ItemSearchResponse, error) {
-	arguments := make(map[string]string)
-	arguments["Operation"] = "ItemSearch"
-	arguments["SearchIndex"] = searchIndex
-	arguments["Keywords"] = keywords
+//    response,err := request.ItemSearch("Medium,Accessories", "All", "golang")
+func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) ([]byte, error) {
+	params := make(map[string]string)
+	params["Operation"] = "ItemSearch"
+	params["SearchIndex"] = searchIndex
+	params["Keywords"] = keywords
 
-	requestURL := request.buildURL(arguments, responseGroups)
-	contents, err := doRequest(requestURL)
-
-	response := ItemSearchResponse{}
-
-	if err == nil {
-		err = xml.Unmarshal(contents, &response)
-	}
-
-	return contents, response, err
+	requestURL := request.buildURL(params, responseGroups)
+	return request.doRequest(requestURL)
 }
 
 // Build and sign amazon specific URL
 //
 // Usage:
-// url := request.buildURL(arguments, responseGroup)
-func (request *AmazonRequest) buildURL(arguments map[string]string, responseGroups string) string {
+//    url := request.buildURL(params, responseGroup)
+func (request *AmazonRequest) buildURL(params map[string]string, responseGroups string) string {
 	now := time.Now()
-	arguments["AWSAccessKeyId"] = request.AccessKeyID
-	arguments["Version"] = request.Version
-	arguments["Timestamp"] = now.Format(time.RFC3339)
-	arguments["Service"] = "AWSEcommerceService"
-	arguments["AssociateTag"] = request.AssociateTag
-	arguments["ResponseGroup"] = responseGroups
+	params["AWSAccessKeyId"] = request.AccessKeyID
+	params["Version"] = request.Version
+	params["Timestamp"] = now.Format(time.RFC3339)
+	params["Service"] = request.Service
+	params["AssociateTag"] = request.AssociateTag
+	params["ResponseGroup"] = responseGroups
 
-	// Sort the keys otherwise Amazon hash will be
-	// different from mine and the request will fail
-	keys := make([]string, 0, len(arguments))
-	for argument := range arguments {
+	// Sort the keys otherwise Amazon hash will be different from mine and the request will fail
+	keys := make([]string, 0, len(params))
+	for argument := range params {
 		keys = append(keys, argument)
 	}
 	sort.Strings(keys)
 
 	// There's probably a more efficient way to concatenate strings, not a big deal though.
+	// TODO もっと効率のいい文字列連結方法があるはず
 	var queryString string
 	for _, key := range keys {
-		escapedArg := url.QueryEscape(arguments[key])
+		escapedArg := url.QueryEscape(params[key])
 		queryString += fmt.Sprintf("%s=%s", key, escapedArg)
 
 		// Add '&' but only if it's not the the last argument
@@ -119,34 +114,28 @@ func (request *AmazonRequest) buildURL(arguments map[string]string, responseGrou
 	}
 
 	// Hash & Sign
-	domain := service_domains[request.Region]
-
-	data := "GET\n" + domain + "\n/onca/xml\n" + queryString
+	host := hosts[request.Region]
+	path := "/onca/xml"
+	data := fmt.Sprintf("GET\n%s\n%s\n%s", host, path, queryString)
 	hash := hmac.New(sha256.New, []byte(request.AccessKeySecret))
 	hash.Write([]byte(data))
 	signature := url.QueryEscape(base64.StdEncoding.EncodeToString(hash.Sum(nil)))
-	queryString = fmt.Sprintf("%s&Signature=%s", queryString, signature)
+	signedQueryString := fmt.Sprintf("%s&Signature=%s", queryString, signature)
 
 	// build request URL
-	requestURL := fmt.Sprintf("http://%s/onca/xml?%s", domain, queryString)
+	requestURL := fmt.Sprintf("http://%s/onca/xml?%s", host, signedQueryString)
 	return requestURL
 }
 
-// TODO add "Accept-Encoding": "gzip" and override UserAgent
 // which is set to Go http package.
-func doRequest(requestURL string) ([]byte, error) {
-	var httpResponse *http.Response
-	var err error
-	var contents []byte
+func (request *AmazonRequest) doRequest(requestURL string) ([]byte, error) {
 
-	httpResponse, err = http.Get(requestURL)
+	httpResponse, err := request.Client.Get(requestURL)
+	defer httpResponse.Body.Close()
 
 	if err != nil {
-		return []byte(""), err
+		return nil, err
 	}
 
-	contents, err = ioutil.ReadAll(httpResponse.Body)
-	httpResponse.Body.Close()
-
-	return contents, err
+	return ioutil.ReadAll(httpResponse.Body)
 }
