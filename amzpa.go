@@ -69,11 +69,13 @@ func (request *AmazonRequest) ItemLookup(responseGroups string, idType string, i
 // Perform an ItemLookup request.
 //
 // Usage:
-//    response,err := request.ItemSearch("Medium,Accessories", "All", "golang")
-func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, keywords string) ([]byte, error) {
+//    response,err := request.ItemSearch("Medium,Accessories", "All", "", "golang")
+//    response,err := request.ItemSearch("Medium,Accessories", "Books", "salesrank", "golang")
+func (request *AmazonRequest) ItemSearch(responseGroups string, searchIndex string, sort string, keywords string) ([]byte, error) {
 	params := make(map[string]string)
 	params["Operation"] = "ItemSearch"
 	params["SearchIndex"] = searchIndex
+	params["Sort"] = sort
 	params["Keywords"] = keywords
 
 	requestURL := request.buildURL(params, responseGroups)
